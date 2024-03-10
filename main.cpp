@@ -1,5 +1,5 @@
+#include "flappy_bird.h"
 #include <iostream>
-#include <vector>
 #include <cstdlib>
 #include <ctime>
 #include <unistd.h>
@@ -17,39 +17,30 @@ const int GRAVITY = 1;
 const int FLAP_FORCE = -2;
 const int TICK_DELAY = 100000;
 
-struct Bird {
-    int x, y;
-    int velocity;
+Bird::Bird(int startX, int startY) : x(startX), y(startY), velocity(0) {}
 
-    Bird(int startX, int startY) : x(startX), y(startY), velocity(0) {}
+void Bird::flap() {
+    velocity = FLAP_FORCE;
+}
 
-    void flap() {
-        velocity = FLAP_FORCE;
-    }
+void Bird::update() {
+    velocity += GRAVITY;
+    y += velocity;
+}
 
-    void update() {
-        velocity += GRAVITY;
-        y += velocity;
-    }
+bool Bird::isOutsideBounds() {
+    return y <= 0 || y >= HEIGHT;
+}
 
-    bool isOutsideBounds() {
-        return y <= 0 || y >= HEIGHT;
-    }
+bool Bird::isColliding(int pipeX, int gapPosition) {
+    return x == pipeX && (y < gapPosition || y >= gapPosition + PIPE_GAP);
+}
 
-    bool isColliding(int pipeX, int gapPosition) {
-        return x == pipeX && (y < gapPosition || y >= gapPosition + PIPE_GAP);
-    }
-};
+Pipe::Pipe(int startX, int startGapPosition) : x(startX), gapPosition(startGapPosition) {}
 
-struct Pipe {
-    int x, gapPosition;
-
-    Pipe(int startX, int startGapPosition) : x(startX), gapPosition(startGapPosition) {}
-
-    bool isPastBird(int birdX) {
-        return x + PIPE_WIDTH < birdX;
-    }
-};
+bool Pipe::isPastBird(int birdX) {
+    return x + PIPE_WIDTH < birdX;
+}
 
 int main() {
     srand(time(0));
@@ -75,7 +66,7 @@ int main() {
             pipes.emplace_back(WIDTH, gapPosition);
         }
 
-        for (auto& pipe : pipes) {
+        for (auto &pipe : pipes) {
             pipe.x--;
 
             if (bird.isColliding(pipe.x, pipe.gapPosition) || bird.isOutsideBounds()) {
@@ -88,12 +79,12 @@ int main() {
         }
 
         pipes.erase(std::remove_if(pipes.begin(), pipes.end(),
-                                   [](const Pipe& pipe) { return pipe.x + PIPE_WIDTH < 0; }),
+                                   [](const Pipe &pipe) { return pipe.x + PIPE_WIDTH < 0; }),
                     pipes.end());
 
         bird.update();
 
-        for (auto& pipe : pipes) {
+        for (auto &pipe : pipes) {
             std::cout << std::string(pipe.x, ' ') << PIPE << std::endl;
             for (int i = 0; i < HEIGHT; i++) {
                 if (i < pipe.gapPosition || i >= pipe.gapPosition + PIPE_GAP) {
